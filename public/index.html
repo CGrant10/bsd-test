@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#681b34">
+  <title>BSD #7 Community Assistance</title>
+  <style>
+    :root{--m:#681b34;--md:#431021;--g:#d4af37;--c:#fbf7ec;--red:#b42318;--mut:#6b7280}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--c);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#18181b}
+    header{background:var(--m);color:white;padding:16px;position:sticky;top:0;z-index:10}
+    .brand{display:flex;gap:11px;align-items:center;max-width:900px;margin:auto}
+    .mark{width:50px;height:50px;border:2px solid var(--g);border-radius:50%;display:grid;place-items:center;color:var(--g);font-weight:900;font-size:11px;text-align:center;background:var(--md)}
+    h1{font-size:19px;margin:0}
+    .sub{font-size:11px;color:#f3dda1}
+    .verify{margin-left:auto;border:1px solid var(--g);color:var(--g);padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}
+    main{max-width:900px;margin:auto;padding:16px 16px 90px}
+    .hero{background:var(--md);color:white;padding:22px;border-radius:18px;margin-bottom:15px}
+    .ey{color:var(--g);font-size:10px;font-weight:900;letter-spacing:1px}
+    .hero h2{font-size:29px;line-height:1.08;margin:7px 0}
+    .hero p{color:#f5e8ed;line-height:1.5}
+    .card{background:white;border:1px solid #e8dcc5;border-radius:15px;padding:16px;margin-bottom:12px}
+    .card h3{margin:4px 0 8px;color:var(--md)}
+    .mut{color:var(--mut);line-height:1.5}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .between{justify-content:space-between}
+    button{font:inherit;border:0;border-radius:11px;padding:12px 15px;font-weight:850;cursor:pointer}
+    .gold{background:var(--g);color:var(--md)}
+    .maroon{background:var(--m);color:white}
+    .ghost{background:#eee9dd;color:var(--md)}
+    .full{width:100%;margin-top:10px}
+    input,textarea,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font:inherit;background:white}
+    textarea{min-height:100px}
+    label{display:block;font-weight:750;font-size:12px;margin:10px 0 5px}
+    .hidden{display:none!important}
+    .auth{max-width:480px;margin:25px auto}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+    .tab{background:#ede6d8}
+    .tab.on{background:var(--m);color:white}
+    .status{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:#f3ead0;color:var(--m)}
+    .status.active{background:#fee4e2;color:var(--red)}
+    .notice{background:#fff8dd;border-left:4px solid var(--g);padding:14px;border-radius:10px;line-height:1.45}
+    .danger{background:#fff1f0;border-left:4px solid var(--red);padding:12px;border-radius:10px;color:#7a271a}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:30}
+    .modal.open{display:flex}
+    .sheet{width:100%;max-height:90vh;overflow:auto;background:white;border-radius:22px 22px 0 0;padding:20px}
+    .photo{height:170px;border-radius:14px;background:#efe4c8;display:grid;place-items:center;text-align:center;color:#69591d;font-weight:800;margin:11px 0}
+    .perm{border:1px solid #eee1c8;border-radius:10px;padding:12px;margin-top:8px}
+    .perm b{color:var(--md)}
+    nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(3,1fr);padding:10px 0}
+    nav button{background:none;color:#777}
+    .navon{color:var(--m)!important}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark">BSD<br>#7</div>
+      <div><h1>Community Assistance</h1><div class="sub">Belcourt School District #7</div></div>
+      <div class="verify">OFFICIAL</div>
+    </div>
+  </header>
+
+  <div id="auth" class="auth">
+    <main>
+      <div class="hero">
+        <div class="ey">COMMUNITY SAFETY NETWORK</div>
+        <h2>Hopefully we never need it. Ready if we do.</h2>
+        <p>A direct way for BSD #7 to request community assistance when an enrolled student is confirmed missing or endangered.</p>
+      </div>
+      <div class="card">
+        <button class="full" onclick="alert('Production Google sign-in requires district Firebase/Google OAuth setup. This local demo uses email/password.')">G&nbsp;&nbsp; Continue with Google</button>
+        <div class="tabs"><button id="lt" class="tab on" onclick="mode('login')">Sign In</button><button id="rt" class="tab" onclick="mode('register')">Create Account</button></div>
+        <div id="nw" class="hidden"><label>Name</label><input id="name"></div>
+        <label>Email</label><input id="email">
+        <label>Password</label><input id="password" type="password">
+        <button class="maroon full" onclick="go()">Continue</button>
+        <button class="ghost full" onclick="demo()">Use Demo Admin</button>
+        <p id="msg" class="mut"></p>
+      </div>
+    </main>
+  </div>
+
+  <div id="app" class="hidden">
+    <section id="home">
+      <main>
+        <div class="hero">
+          <div class="ey">YOU'RE CONNECTED</div>
+          <h2 id="welcome">Community Assistance</h2>
+          <p>You will receive official BSD #7 Community Assistance notifications if community help is requested.</p>
+          <button class="gold" onclick="notify()">Enable Push Notifications</button>
+        </div>
+        <div class="row between"><h2 style="color:var(--md)">Community Assistance Requests</h2><span id="role" class="status"></span></div>
+        <div id="alerts"></div>
+        <div class="notice"><b>Important:</b> This does not replace 911, law enforcement, or official state/federal missing-child alert systems.</div>
+      </main>
+    </section>
+
+    <section id="admin" class="hidden">
+      <main>
+        <h2 style="color:var(--md)">Authorized District Console</h2>
+        <div class="danger"><b>Required:</b> investigating agency and public tip/contact number must be entered before an alert can be submitted.</div>
+        <div class="card">
+          <h3>Create Community Assistance Request</h3>
+          <div class="grid"><div><label>Child name / approved identifier</label><input id="an"></div><div><label>Age</label><input id="aa"></div></div>
+          <label>Public description *</label><textarea id="ad"></textarea>
+          <label>Last known general location</label><input id="al">
+          <label>Vehicle description</label><input id="av">
+          <div class="grid"><div><label>Investigating agency *</label><input id="ag"></div><div><label>Public tip/contact number *</label><input id="ap"></div></div>
+          <label>Case / incident number</label><input id="ac">
+          <button class="gold full" onclick="submitAlert()">Submit for Approval</button>
+          <p id="amsg" class="mut"></p>
+        </div>
+        <div id="adminAlerts"></div>
+      </main>
+    </section>
+
+    <section id="account" class="hidden">
+      <main>
+        <div class="card">
+          <h3>Account</h3>
+          <p id="acct"></p>
+          <button class="ghost full" onclick="logout()">Sign Out</button>
+        </div>
+        <div id="adminUsers" class="hidden">
+          <div class="card">
+            <h3>Authorized District Users</h3>
+            <p class="mut">Add trusted district staff and choose what they are allowed to do during a Community Assistance event.</p>
+            <div class="grid"><div><label>Full name</label><input id="un"></div><div><label>Email</label><input id="ue"></div></div>
+            <div class="grid"><div><label>Temporary password</label><input id="up" type="password"></div><div><label>Permission</label><select id="ur"><option value="creator">Can draft alerts</option><option value="approver">Can approve and send alerts</option><option value="admin">Full manager access</option></select></div></div>
+            <button class="gold full" onclick="createUser()">Add Authorized User</button>
+            <p id="umsg" class="mut"></p>
+          </div>
+          <div id="usersList"></div>
+        </div>
+        <div class="card"><h3>Version 1 scope</h3><p class="mut">Community Assistance safety alerts only. Routine school announcements are intentionally separate.</p></div>
+      </main>
+    </section>
+
+    <nav><button id="nh" class="navon" onclick="screen('home')">Home</button><button id="na" class="hidden" onclick="screen('admin')">District</button><button id="nc" onclick="screen('account')">Account</button></nav>
+  </div>
+
+  <div id="detail" class="modal"><div class="sheet" id="sheet"></div></div>
+
+  <script>
+    let token=localStorage.getItem('t')||'',user=null,m='login';
+    function mode(x){m=x;nw.classList.toggle('hidden',x!=='register');lt.classList.toggle('on',x==='login');rt.classList.toggle('on',x==='register')}
+    function demo(){email.value='admin@bsd7.local';password.value='CommunityAssist7!';mode('login')}
+    async function api(p,o={}){o.headers=Object.assign({'Content-Type':'application/json'},o.headers||{},token?{'Authorization':'Bearer '+token}:{});let r=await fetch(p,o),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'Request failed');return j}
+    async function go(){try{let b={email:email.value,password:password.value};if(m==='register')b.name=name.value;let j=await api('/api/'+m,{method:'POST',body:JSON.stringify(b)});token=j.token;localStorage.setItem('t',token);user=j.user;start()}catch(e){msg.textContent=e.message}}
+    async function start(){try{if(!user)user=(await api('/api/me')).user;let isManager=user.role==='admin'||user.email==='admin@bsd7.local';auth.classList.add('hidden');app.classList.remove('hidden');welcome.textContent='Welcome, '+user.name.split(' ')[0];role.textContent=isManager?'MANAGER':user.role.toUpperCase();acct.textContent=user.name+' - '+user.email+' - '+(isManager?'manager':user.role);na.classList.toggle('hidden',!['creator','approver','admin'].includes(user.role)&&!isManager);adminUsers.classList.toggle('hidden',!isManager);await load();if(['creator','approver','admin'].includes(user.role)||isManager)await loadAdmin();if(isManager)await loadUsers()}catch(e){localStorage.removeItem('t');token='';auth.classList.remove('hidden');app.classList.add('hidden')}}
+    async function load(){let j=await api('/api/alerts');alerts.innerHTML=j.alerts.length?j.alerts.map(a=>`<div class="card" onclick='show(${JSON.stringify(a).replace(/'/g,"&#39;")})'><div class="row between"><b style="color:${a.status==='active'?'var(--red)':'var(--m)'}">${a.status==='active'?'COMMUNITY ASSISTANCE REQUEST':'COMMUNITY UPDATE'}</b><span class="status ${a.status==='active'?'active':''}">${a.status.toUpperCase()}</span></div><h3>${e(a.title)}</h3><p class="mut">${e(a.description)}</p></div>`).join(''):`<div class="card"><h3>No active Community Assistance Requests</h3><p class="mut">Hopefully it stays this way. Your account is ready if BSD #7 ever needs community assistance.</p></div>`}
+    function e(s=''){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+    function roleText(r){return r==='creator'?'Can draft alerts':r==='approver'?'Can approve and send alerts':'Full manager access'}
+    function roleHelp(r){return r==='creator'?'Can prepare a request for review, but cannot activate it.':r==='approver'?'Can review, approve, activate, and send all-clear updates.':'Can add authorized users and manage the full alert workflow.'}
+    function show(a){sheet.innerHTML=`<b style="color:var(--red)">OFFICIAL BSD #7 COMMUNITY ASSISTANCE</b><h2>${e(a.title)}</h2><div class="photo">Approved student / alert photo</div>${a.child_name?`<p><b>Name:</b> ${e(a.child_name)} ${a.age?' - Age '+e(a.age):''}</p>`:''}<p>${e(a.description)}</p>${a.last_known?`<p><b>Last known:</b> ${e(a.last_known)}</p>`:''}${a.vehicle?`<p><b>Vehicle:</b> ${e(a.vehicle)}</p>`:''}<div class="danger"><b>Immediate sighting:</b> Call 911. Do not approach or follow.</div><p><b>Investigating agency:</b> ${e(a.law_agency)}</p><p><b>Information / tips:</b> <a href="tel:${e(a.law_phone)}">${e(a.law_phone)}</a></p><button class="maroon full" onclick="location.href='tel:${e(a.law_phone)}'">I Have Information</button><button class="ghost full" onclick="detail.classList.remove('open')">Close</button>`;detail.classList.add('open')}
+    async function submitAlert(){try{let b={child_name:an.value,age:aa.value,description:ad.value,last_known:al.value,vehicle:av.value,law_agency:ag.value,law_phone:ap.value,case_number:ac.value};let j=await api('/api/admin/alerts',{method:'POST',body:JSON.stringify(b)});amsg.textContent='Submitted for approval. Alert #'+j.alert_id;loadAdmin()}catch(e){amsg.textContent=e.message}}
+    async function loadAdmin(){let j=await api('/api/admin/alerts');adminAlerts.innerHTML=j.alerts.map(a=>`<div class="card"><div class="row between"><b>Alert #${a.id}</b><span class="status ${a.status==='active'?'active':''}">${a.status.toUpperCase()}</span></div><h3>${e(a.child_name||a.title)}</h3><p class="mut">${e(a.description)}</p><div class="row">${a.status==='pending'?`<button class="gold" onclick="approve(${a.id})">Approve & Activate</button>`:''}${a.status==='active'?`<button class="maroon" onclick="resolveA(${a.id})">Child Located / All Clear</button>`:''}</div></div>`).join('')}
+    async function loadUsers(){let j=await api('/api/admin/users');usersList.innerHTML=j.users.map(u=>`<div class="card"><div class="row between"><b>${e(u.name)}</b><span class="status">${u.role==='admin'?'MANAGER':e(u.role).toUpperCase()}</span></div><p class="mut">${e(u.email)}</p><div class="perm"><b>${roleText(u.role)}</b><p class="mut">${roleHelp(u.role)}</p></div></div>`).join('')}
+    async function createUser(){try{let b={name:un.value,email:ue.value,password:up.value,role:ur.value};let j=await api('/api/admin/users',{method:'POST',body:JSON.stringify(b)});umsg.textContent='Authorized user added: '+j.user.email;un.value=ue.value=up.value='';await loadUsers()}catch(e){umsg.textContent=e.message}}
+    async function approve(id){await api('/api/admin/alerts/'+id+'/approve',{method:'POST',body:'{}'});await loadAdmin();await load();alert('Activated. Production build would now send push notifications.')}
+    async function resolveA(id){await api('/api/admin/alerts/'+id+'/resolve',{method:'POST',body:'{}'});await loadAdmin();await load();alert('Resolved. Production build would send all-clear.')}
+    function screen(x){home.classList.toggle('hidden',x!=='home');admin.classList.toggle('hidden',x!=='admin');account.classList.toggle('hidden',x!=='account');nh.classList.toggle('navon',x==='home');na.classList.toggle('navon',x==='admin');nc.classList.toggle('navon',x==='account')}
+    function notify(){if(!('Notification'in window))return alert('Not supported here');Notification.requestPermission().then(p=>alert('Notification permission: '+p))}
+    function logout(){localStorage.removeItem('t');location.reload()}
+    if(token)start();
+  </script>
+</body>
+</html>
