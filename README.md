@@ -1,47 +1,39 @@
-# BSD #7 Community Assistance — Full-Stack Prototype
+# BSD #7 Community Assistance
 
-This is a working laptop prototype of the narrow safety mission you defined.
+Supabase-backed web/PWA prototype for Belcourt School District #7 Community Assistance.
 
-## Run it now
-Requires Python 3.10+ and no third-party packages.
+## Current architecture
 
-### Windows
-1. Extract this ZIP.
-2. Open the extracted folder.
-3. Double-click `start-demo.bat`, or open PowerShell in the folder and run:
-   `python server.py --demo`
-4. Open `http://localhost:8080` in your laptop browser.
+- Static browser app (`index.html`, `app.js`)
+- Supabase Auth for user identity
+- Supabase PostgreSQL for profiles and alerts
+- Row Level Security for permissions
+- Roles: `community`, `creator`, `approver`, `admin`
+- Versioned service worker and `version.txt` update checks
 
-Demo district admin:
-- Email: `admin@bsd7.local`
-- Password: `CommunityAssist7!`
+## Authentication
 
-To test as a community member, create a second account using the Create Account tab.
+The app is wired for **Sign in with Google** through Supabase Auth. Google must be enabled in the Supabase Dashboard and configured with a Google OAuth Web Client ID/Secret before the button will complete sign-in.
 
-## Test it on your phone
-Keep your laptop and phone on the same Wi-Fi.
-Run `ipconfig` on Windows and find your laptop's IPv4 address. On the phone open:
-`http://YOUR-LAPTOP-IP:8080`
+Every new authenticated user receives a `profiles` row and defaults to `community`. Admins can promote users to creator, approver, or admin from the app.
 
-Windows Firewall may ask to allow Python on Private networks. Allow Private-network access for this local test.
+## Permissions
 
-## What works in this prototype
-- Community account creation and sign-in.
-- District/admin role.
-- Draft Community Assistance Request.
-- Required investigating agency and public tip/contact number.
-- Approval before an alert becomes active.
-- Community alert feed.
-- "I Have Information" route to the law-enforcement number.
-- Immediate sighting guidance to call 911 and not approach/follow.
-- Child Located / All Clear workflow.
-- SQLite backend with WAL mode.
-- Audit table for key actions.
+- `community`: read approved/active/resolved alerts
+- `creator`: create pending requests; cannot approve them
+- `approver`: review, approve/activate, and resolve alerts
+- `admin`: administrative access plus role management
 
-## Google sign-in and real push notifications
-The UI includes Google sign-in as the intended production login, but a real Google OAuth client cannot be activated until a district-approved Firebase/Google project exists. The production architecture folder explains the setup.
+Permissions are enforced by PostgreSQL RLS, not only by hidden UI controls.
 
-Real push notifications likewise require FCM/APNs credentials and a deployed backend. The alert approval endpoints in this prototype already contain the points where production push jobs would be queued.
+## Updating
 
-## Production recommendation
-Do not expose this local Python server to the internet. Deploy the production version on managed infrastructure such as Firebase/Google Cloud so phone crashes, laptop failures, or sudden usage spikes do not take the service down.
+`config.js` contains `APP_VERSION`; `version.txt` contains the deployed version; `sw.js` contains the cache version. Keep these versions synchronized when shipping a release. Running clients check `version.txt` at startup, when returning to the app, and every 10 minutes, then offer to update.
+
+## Supabase
+
+Project URL and the browser-safe publishable key are in `config.js`. Never add a Supabase secret/service-role key to this repository or frontend code.
+
+## Hosting
+
+This is now a static web app. It can be hosted on GitHub Pages or another HTTPS static host. Google OAuth redirect URLs must match the final hosted URL.
