@@ -1,0 +1,9 @@
+{
+  "name":"BSD #7 Community Assistance",
+  "short_name":"BSD7 Assist",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#fbf7ec",
+  "theme_color":"#681b34",
+  "description":"Belcourt School District #7 Community Assistance"
+}
