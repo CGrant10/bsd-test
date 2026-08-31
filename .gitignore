@@ -1,0 +1,5 @@
+community_assistance.db
+community_assistance.db-wal
+community_assistance.db-shm
+__pycache__/
+*.pyc
