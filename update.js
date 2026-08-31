@@ -1,0 +1,7 @@
+import { APP_VERSION } from './config.js';
+const CHECK_MS=10*60*1000;
+function newer(a,b){const x=String(a).trim().split('.').map(Number),y=String(b).trim().split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){if((x[i]||0)>(y[i]||0))return true;if((x[i]||0)<(y[i]||0))return false}return false}
+async function latest(){const r=await fetch(`./version.txt?cb=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('version check failed');return (await r.text()).trim()}
+async function check(){const v=await latest();if(!newer(v,APP_VERSION))return;document.querySelector('#update-text').textContent=`Version ${v} is ready. You have ${APP_VERSION}.`;document.querySelector('#update').classList.remove('hidden')}
+async function update(){document.querySelector('#update-go').textContent='Updating…';if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.update().catch(()=>{})));for(const r of regs)if(r.waiting)r.waiting.postMessage('SKIP_WAITING')}location.replace(`${location.pathname}?u=${Date.now()}${location.hash}`)}
+export function setupUpdates(){document.querySelector('#update-go').onclick=update;document.querySelector('#update-no').onclick=()=>document.querySelector('#update').classList.add('hidden');check().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)check().catch(()=>{})});setInterval(()=>{if(!document.hidden)check().catch(()=>{})},CHECK_MS)}
