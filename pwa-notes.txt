@@ -1,0 +1,1 @@
+PWA install support: Chromium uses beforeinstallprompt; iOS/iPadOS shows Add to Home Screen guidance; manifest provides 192/512 icons; service worker handles shell caching and update activation.
