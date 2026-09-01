@@ -3,6 +3,7 @@ import { APP_VERSION } from './config.js';
 const CHECK_MS=10*60*1000;
 let checking=false;
 let availableVersion='';
+let scrollGuardReady=false;
 
 function newer(a,b){
   const x=String(a).trim().split('.').map(Number),y=String(b).trim().split('.').map(Number);
@@ -19,6 +20,25 @@ async function latest(){
   return (await r.text()).trim();
 }
 
+function syncScrollState(){
+  const root=document.documentElement;
+  const viewport=Math.ceil(window.visualViewport?.height||window.innerHeight||0);
+  const content=Math.ceil(root.scrollHeight);
+  root.classList.toggle('page-fit',content<=viewport+2);
+}
+
+function setupScrollGuard(){
+  if(scrollGuardReady)return;
+  scrollGuardReady=true;
+  const sync=()=>requestAnimationFrame(syncScrollState);
+  sync();
+  window.addEventListener('resize',sync,{passive:true});
+  window.addEventListener('orientationchange',sync,{passive:true});
+  window.visualViewport?.addEventListener('resize',sync,{passive:true});
+  if('ResizeObserver'in window)new ResizeObserver(sync).observe(document.body);
+  else new MutationObserver(sync).observe(document.body,{subtree:true,childList:true,attributes:true});
+}
+
 function showUpdate(v){
   availableVersion=v;
   const title=document.querySelector('#update-title');
@@ -26,7 +46,9 @@ function showUpdate(v){
   if(title)title.textContent='Update available';
   if(detail)detail.textContent=`v${APP_VERSION} → v${v}`;
   document.querySelector('#update')?.classList.remove('hidden');
+  document.documentElement.classList.add('update-visible');
   document.querySelector('#install-card')?.classList.add('hidden');
+  syncScrollState();
 }
 
 async function check(){
@@ -55,8 +77,8 @@ async function update(){
 }
 
 export function setupUpdates(){
+  setupScrollGuard();
   document.querySelector('#update-go')?.addEventListener('click',update);
-  document.querySelector('#update-no')?.addEventListener('click',()=>document.querySelector('#update')?.classList.add('hidden'));
   check().catch(()=>{});
   window.addEventListener('focus',()=>check().catch(()=>{}));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)check().catch(()=>{})});
