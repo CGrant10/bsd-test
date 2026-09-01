@@ -40,6 +40,14 @@
     </form>
     <div id="auth-note" class="notice hidden" style="margin-top:12px"></div>
   </section>
+  <section id="access-state" class="auth card hidden" aria-live="polite">
+    <div class="role">Account status</div>
+    <h2 id="access-state-title">Awaiting administrator approval</h2>
+    <p id="access-state-copy" class="mut"></p>
+    <div id="decision-notify-wrap" class="hidden"><button id="decision-notify-toggle" class="maroon full" type="button">Notify me of the decision</button><p id="decision-notify-status" class="mut" aria-live="polite"></p></div>
+    <button class="ghost full" type="button" onclick="location.reload()" style="margin-top:8px">Check status</button>
+    <button id="access-signout" class="ghost full" type="button" style="margin-top:8px">Sign out</button>
+  </section>
   <section id="app" class="hidden">
     <div class="hero"><div class="role">Community safety</div><h2>Verified information. Controlled publishing.</h2><p>Community members receive approved alerts. Authorized district staff create and approve requests before they become active.</p><div class="row"><button id="refresh" class="gold">Refresh alerts</button><button id="notify-toggle" class="ghost" type="button">Enable notifications</button><button id="signout" class="ghost">Sign out</button><span id="notify-status" class="notify-status" aria-live="polite"></span></div></div>
     <div class="tabs" role="tablist" aria-label="Application sections"><button id="tab-feed" class="on" role="tab" aria-selected="true" aria-controls="feed">Alerts</button><button id="tab-create" class="hidden" role="tab" aria-selected="false" aria-controls="create" tabindex="-1">Create</button><button id="tab-admin" class="hidden" role="tab" aria-selected="false" aria-controls="admin" tabindex="-1">Admin</button></div>

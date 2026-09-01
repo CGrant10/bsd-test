@@ -39,9 +39,7 @@ async function authenticate(request: Request) {
   if (userError || !user) throw new Error("Your sign-in session is no longer valid");
   const { data: profile, error: profileError } = await userClient.from("profiles")
     .select("id,role,is_active,access_status").eq("id", user.id).single();
-  if (profileError || !profile?.is_active || profile.access_status !== "active") {
-    throw new Error("Active community access is required");
-  }
+  if (profileError || !profile) throw new Error("A community profile is required");
   return { user, profile, admin };
 }
 
@@ -85,6 +83,10 @@ Deno.serve(async request => {
     const { user, profile, admin } = await authenticate(request);
     const action = String(input.action || "");
 
+    if (["config", "status", "subscribe", "unsubscribe"].includes(action) && profile.access_status === "revoked") {
+      return json({ ok: false, error: "This account no longer has notification access" }, 403);
+    }
+
     if (action === "config") {
       const keys = await vapidKeys(admin);
       return json({ ok: true, publicKey: keys.publicKey });
@@ -121,8 +123,67 @@ Deno.serve(async request => {
       return json({ ok: true });
     }
 
+    if (action === "access-decision") {
+      if (profile.role !== "admin" || !profile.is_active || profile.access_status !== "active") {
+        return json({ ok: false, error: "Active administrator access is required" }, 403);
+      }
+      const targetId = String(input.userId || ""), decision = String(input.decision || "");
+      if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(targetId)) return json({ ok: false, error: "Invalid member" }, 400);
+      if (targetId === user.id) return json({ ok: false, error: "You cannot change your own access" }, 409);
+      const transitions: Record<string, { from: string; status: string; active: boolean; title: string; body: string }> = {
+        approve: { from: "pending", status: "active", active: true, title: "BSD #7 access approved", body: "Your community assistance account has been approved. You can sign in now." },
+        deny: { from: "pending", status: "revoked", active: false, title: "BSD #7 access decision", body: "Your community assistance account request was not approved. Contact the district with questions." },
+        revoke: { from: "active", status: "revoked", active: false, title: "BSD #7 access changed", body: "Access to your community assistance account has been revoked. Contact the district with questions." },
+        restore: { from: "revoked", status: "active", active: true, title: "BSD #7 access restored", body: "Access to your community assistance account has been restored. You can sign in now." },
+      };
+      const transition = transitions[decision];
+      if (!transition) return json({ ok: false, error: "Invalid access decision" }, 400);
+      const { data: target, error: targetError } = await admin.from("profiles")
+        .select("id,access_status,is_active").eq("id", targetId).maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) return json({ ok: false, error: "Member not found" }, 404);
+      if (target.access_status !== transition.from) {
+        if (target.access_status === transition.status && target.is_active === transition.active) return json({ ok: true, alreadyApplied: true, delivered: 0, failed: 0 });
+        return json({ ok: false, error: "That access decision is not valid for the member's current status" }, 409);
+      }
+      const { error: updateError } = await admin.from("profiles").update({
+        access_status: transition.status, is_active: transition.active, updated_at: new Date().toISOString(),
+      }).eq("id", targetId).eq("access_status", transition.from);
+      if (updateError) throw updateError;
+      await admin.from("audit_logs").insert({
+        actor_id: user.id, action: `member.access_${decision}`, entity_type: "profile", entity_id: targetId,
+        details: { from: transition.from, to: transition.status },
+      });
+      let delivered = 0, failed = 0, notificationError = "";
+      try {
+        const { data: subscriptions, error: subscriptionsError } = await admin.from("push_subscriptions")
+          .select("id,endpoint,p256dh,auth,failure_count").eq("user_id", targetId).eq("enabled", true);
+        if (subscriptionsError) throw subscriptionsError;
+        if (subscriptions?.length) {
+          const keys = await vapidKeys(admin);
+          webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "https://github.com/CGrant10/bsd-test", keys.publicKey, keys.privateKey);
+          const payload = JSON.stringify({ title: transition.title, body: transition.body });
+          await Promise.all(subscriptions.map(async row => {
+            try {
+              await webpush.sendNotification({ endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } }, payload, { TTL: 86400, urgency: "normal" });
+              delivered++;
+              await admin.from("push_subscriptions").update({ failure_count: 0, last_success_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", row.id);
+            } catch (cause) {
+              failed++;
+              const statusCode = Number((cause as { statusCode?: number })?.statusCode || 0), failureCount = Number(row.failure_count || 0) + 1;
+              await admin.from("push_subscriptions").update({ enabled: ![404, 410].includes(statusCode) && failureCount < 3, failure_count: failureCount, updated_at: new Date().toISOString() }).eq("id", row.id);
+            }
+          }));
+        }
+      } catch (notificationCause) {
+        notificationError = notificationCause instanceof Error ? notificationCause.message : "Decision notification could not be delivered";
+        console.error("access-decision-notification", notificationCause);
+      }
+      return json({ ok: true, delivered, failed, notificationError });
+    }
+
     if (action !== "send-alert") return json({ ok: false, error: "Unknown action" }, 400);
-    if (!["approver", "admin"].includes(profile.role)) {
+    if (!profile.is_active || profile.access_status !== "active" || !["approver", "admin"].includes(profile.role)) {
       return json({ ok: false, error: "Approver access is required" }, 403);
     }
     const alertId = String(input.alertId || "");
