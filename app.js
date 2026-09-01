@@ -1,11 +1,16 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, APP_VERSION } from './config.js';
 import { setupUpdates } from './update.js';
+import { setupInstall } from './install.js';
 
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let user=null, profile=null;
 const canCreate=()=>['creator','admin'].includes(profile?.role), canApprove=()=>['approver','admin'].includes(profile?.role), isAdmin=()=>profile?.role==='admin';
+
+setupUpdates();
+setupInstall();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(console.warn);
 
 function note(msg){const el=$('#auth-note');el.textContent=msg;el.classList.remove('hidden')}
 function clearNote(){$('#auth-note').classList.add('hidden')}
@@ -27,5 +32,5 @@ async function approve(id){const {error}=await db.from('alerts').update({status:
 async function closeAlert(id){const {error}=await db.from('alerts').update({status:'closed',is_public:true,closed_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);await Promise.all([loadAdmin(),loadAlerts()]);}
 async function saveRole(id,button){const select=document.querySelector(`[data-role="${id}"]`);const {error}=await db.from('profiles').update({role:select.value}).eq('id',id);if(error)return alert(error.message);button.textContent='Saved';setTimeout(()=>button.textContent='Save',1200);}
 function tab(name){for(const n of ['feed','create','admin']){$('#'+n).classList.toggle('hidden',n!==name);$('#tab-'+n)?.classList.toggle('on',n===name)}if(name==='admin')loadAdmin().catch(e=>alert(e.message));}
-async function boot(){console.log(`BSD #7 Community Assistance v${APP_VERSION}`);const versionEl=$('#app-version');if(versionEl)versionEl.textContent=`v${APP_VERSION}`;setupUpdates();if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(console.warn);const {data:{session}}=await db.auth.getSession();if(!session)return;user=session.user;try{await loadProfile()}catch(e){return note(e.message)}$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');paintIdentity();await loadAlerts();}
+async function boot(){console.log(`BSD #7 Community Assistance v${APP_VERSION}`);const versionEl=$('#app-version');if(versionEl)versionEl.textContent=`v${APP_VERSION}`;const {data:{session}}=await db.auth.getSession();if(!session)return;user=session.user;try{await loadProfile()}catch(e){return note(e.message)}$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');paintIdentity();await loadAlerts();}
 $('#google').onclick=signInGoogle;$('#auth-login-tab').onclick=()=>setAuthMode('login');$('#auth-signup-tab').onclick=()=>setAuthMode('signup');$('#login-form').onsubmit=signInEmail;$('#signup-form').onsubmit=signUpEmail;$('#forgot-password').onclick=forgotPassword;$('#signout').onclick=signOut;$('#refresh').onclick=()=>loadAlerts().catch(e=>alert(e.message));$('#alert-form').onsubmit=createAlert;$('#tab-feed').onclick=()=>tab('feed');$('#tab-create').onclick=()=>tab('create');$('#tab-admin').onclick=()=>tab('admin');document.addEventListener('click',e=>{const a=e.target.closest('[data-approve]');if(a)approve(a.dataset.approve);const c=e.target.closest('[data-close]');if(c)closeAlert(c.dataset.close);const r=e.target.closest('[data-save-role]');if(r)saveRole(r.dataset.saveRole,r)});db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'&&!user)boot();});boot().catch(e=>{console.error(e);note(e.message)});
