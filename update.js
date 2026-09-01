@@ -2,6 +2,7 @@ import { APP_VERSION } from './config.js';
 
 const CHECK_MS=10*60*1000;
 let checking=false;
+let updating=false;
 let availableVersion='';
 let scrollGuardReady=false;
 
@@ -60,15 +61,45 @@ async function check(){
   }finally{checking=false}
 }
 
+function waitForControllerChange(previous,timeout=8000){
+  if(!previous)return Promise.resolve(true);
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=changed=>{if(settled)return;settled=true;clearTimeout(timer);navigator.serviceWorker.removeEventListener('controllerchange',changedHandler);resolve(changed)};
+    const changedHandler=()=>finish(navigator.serviceWorker.controller!==previous);
+    const timer=setTimeout(()=>finish(false),timeout);
+    navigator.serviceWorker.addEventListener('controllerchange',changedHandler,{once:true});
+  });
+}
+
+function waitForInstalled(worker,timeout=8000){
+  if(!worker||worker.state!=='installing')return Promise.resolve();
+  return new Promise(resolve=>{
+    const timer=setTimeout(resolve,timeout);
+    worker.addEventListener('statechange',()=>{if(worker.state!=='installing'){clearTimeout(timer);resolve()}},{once:true});
+  });
+}
+
 async function update(){
+  if(updating)return;
+  updating=true;
   const button=document.querySelector('#update-go');
+  const later=document.querySelector('#update-no');
   if(button){button.disabled=true;button.textContent='Updating…'}
+  if(later)later.disabled=true;
   try{
     if('serviceWorker'in navigator){
+      const previous=navigator.serviceWorker.controller;
+      const controllerChanged=waitForControllerChange(previous);
       const regs=await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r=>r.update().catch(()=>{})));
+      await Promise.all(regs.map(r=>waitForInstalled(r.installing)));
       for(const r of regs)if(r.waiting)r.waiting.postMessage('SKIP_WAITING');
-      await new Promise(resolve=>setTimeout(resolve,250));
+      const changed=await controllerChanged;
+      if(!changed&&'caches'in window){
+        const keys=await caches.keys();
+        await Promise.all(keys.filter(key=>key.startsWith('bsd7-community-')).map(key=>caches.delete(key)));
+      }
     }
   }finally{
     const base=location.pathname;
@@ -79,6 +110,7 @@ async function update(){
 export function setupUpdates(){
   setupScrollGuard();
   document.querySelector('#update-go')?.addEventListener('click',update);
+  document.querySelector('#update-no')?.addEventListener('click',()=>{document.querySelector('#update')?.classList.add('hidden');document.documentElement.classList.remove('update-visible');syncScrollState()});
   check().catch(()=>{});
   window.addEventListener('focus',()=>check().catch(()=>{}));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)check().catch(()=>{})});
